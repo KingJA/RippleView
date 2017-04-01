@@ -5,11 +5,11 @@ import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.os.Handler;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
+import android.widget.AdapterView;
 import android.widget.RelativeLayout;
 
 /**
@@ -43,7 +43,9 @@ public class RippleView extends RelativeLayout {
                 Log.e("RippleView", "onLongPress: " );
                 super.onLongPress(event);
                 animateRipple(event);
+                sendClickEvent(true);
             }
+
 
             @Override
             public boolean onSingleTapConfirmed(MotionEvent e) {
@@ -89,6 +91,7 @@ public class RippleView extends RelativeLayout {
     public boolean onTouchEvent(MotionEvent event) {
         if (gestureDetector.onTouchEvent(event)) {
             animateRipple(event);
+            sendClickEvent(false);
         }
         return super.onTouchEvent(event);
     }
@@ -102,14 +105,12 @@ public class RippleView extends RelativeLayout {
         startAnimator();
     }
 
-    private Handler canvasHandler = new Handler();
     private boolean running;
     private float radius = 100;
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        Log.e(TAG, "onDraw: " );
         mRipplePaint.setAlpha((int) (alpha - alpha * (currentValue / radius)));
         canvas.drawCircle(x, y, currentValue, mRipplePaint);
 
@@ -157,5 +158,20 @@ public class RippleView extends RelativeLayout {
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
         radius = Math.max(getMeasuredWidth(), getMeasuredHeight());
+    }
+
+    private void sendClickEvent(final Boolean isLongClick) {
+        if (getParent() instanceof AdapterView) {
+            final AdapterView adapterView = (AdapterView) getParent();
+            final int position = adapterView.getPositionForView(this);
+            final long id = adapterView.getItemIdAtPosition(position);
+            if (isLongClick) {
+                if (adapterView.getOnItemLongClickListener() != null)
+                    adapterView.getOnItemLongClickListener().onItemLongClick(adapterView, this, position, id);
+            } else {
+                if (adapterView.getOnItemClickListener() != null)
+                    adapterView.getOnItemClickListener().onItemClick(adapterView, this, position, id);
+            }
+        }
     }
 }

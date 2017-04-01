@@ -24,6 +24,7 @@ public class RippleView extends RelativeLayout {
     private float x;
     private float y;
     private Paint mRipplePaint;
+    private GestureDetector gestureDetector;
 
     public RippleView(Context context) {
         this(context, null);
@@ -35,15 +36,40 @@ public class RippleView extends RelativeLayout {
 
     public RippleView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        setWillNotDraw(false);
+        gestureDetector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public void onLongPress(MotionEvent event) {
+                Log.e("RippleView", "onLongPress: " );
+                super.onLongPress(event);
+                animateRipple(event);
+            }
+
+            @Override
+            public boolean onSingleTapConfirmed(MotionEvent e) {
+                Log.e("RippleView", "onSingleTapConfirmed: " );
+                return true;
+            }
+
+            @Override
+            public boolean onSingleTapUp(MotionEvent e) {
+                Log.e("RippleView", "onSingleTapUp: " );
+                return true;
+            }
+
+        });
+        this.setDrawingCacheEnabled(true);
+        this.setClickable(true);
         initAttr(context, attrs);
         initRippleView();
-        setWillNotDraw(false);
+
+
+
     }
 
     private int alpha = 90;
 
     private void initRippleView() {
-        this.setClickable(true);
         mRipplePaint = new Paint();
         mRipplePaint.setAntiAlias(true);
         mRipplePaint.setStyle(Paint.Style.FILL);
@@ -54,10 +80,14 @@ public class RippleView extends RelativeLayout {
     private void initAttr(Context context, AttributeSet attrs) {
 
     }
-
+    @Override
+    public boolean onInterceptTouchEvent(MotionEvent event) {
+        this.onTouchEvent(event);
+        return super.onInterceptTouchEvent(event);
+    }
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if (event.getAction() == MotionEvent.ACTION_UP) {
+        if (gestureDetector.onTouchEvent(event)) {
             animateRipple(event);
         }
         return super.onTouchEvent(event);
@@ -79,6 +109,7 @@ public class RippleView extends RelativeLayout {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+        Log.e(TAG, "onDraw: " );
         mRipplePaint.setAlpha((int) (alpha - alpha * (currentValue / radius)));
         canvas.drawCircle(x, y, currentValue, mRipplePaint);
 
